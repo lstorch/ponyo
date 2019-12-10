@@ -1,0 +1,19 @@
+Package: NERRprojectpackage
+Title: Create EPR and SSD for the NERR sites 
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = “Laura”,
+           family = “Storch”,
+           role = c("aut", "cre"),
+           email = “laura.storch@oregonstate.com",
+           comment = c(ORCID = "https://orcid.org/0000-0002-5000-4929")
+    person(given = “Will”,
+           family = “White”,
+           role = c("aut", "cre"),
+           email = “will.white@oregonstate.com",
+           comment = c(ORCID = ???)
+Description: This is a package that creates Stable Size Distributions (SSD) and Eggs Per Recruit (EPR) for the seven NERR sites.  The required input data is called Params, which is a list of Params$Sitenames, Params$M, Params$Linf, and Params$k, where Sitenames is the 7 site names, M are mortality rates for the 7 sites, Linf is the max size for the 7 sites, and k is the growth rate for the 7 sites.  The time step in the model is monthly so M and k are converted from daily to monthly rates inside the code.  The other input parameter is CovMats, which is a list containing the 7 covariance matrices for M, Linf, and k for the 7 sites.  The only function you actually need to run yourself is run_EPR_NERR_simple.  First you will load the data, NERRdata.Rdata, and then call run_EPR_NERR_simple(Params,CovMats), where Params and CovMats are both in NERRdata.Rdata 
+License: NA 
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.0.2
