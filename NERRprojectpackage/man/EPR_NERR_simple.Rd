@@ -8,7 +8,7 @@ EPR_NERR_simple(Params)
 }
 \arguments{
 \item{Params}{This function is written such that it only takes one set of M, Linf, and k at a time for a given site.  Params is still a list
-with Params$M, Params$Linf, Params$k, but they only contain one value each.  This function also requires Params$veclength and Params$x, 
+with Params$M, Params$Linf, Params$k, but they only contain one value each.  This function also requires Params$veclength and Params$x,
 which are created in run_EPR_NERR_simple.}
 }
 \description{

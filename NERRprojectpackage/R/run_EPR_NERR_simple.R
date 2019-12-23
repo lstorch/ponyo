@@ -1,16 +1,18 @@
 #' NERR function to produce SSD and EPR
 #'
-#' Given a set of parameters per site, M (mortality), Linf (max size), and k(growth rate), this function will produce
+#' Given a set of parameters per site, Mjuv (juvenile mortality), Madult (post-juvenile mortality), Linf (max size), and k(growth rate), this function will produce
 #' the EPR and stable size distribution per site and graph the results with the 5th and 95th percentile uncertainties
 #' as upper and lower bounds
-#' @param Params Params is a list with Params$SiteNames, Params$M, Params$k, Params$Linf for all sites.  These can be uploaded by loading Params.Rdata
-#' @param CovMats CovMats is a list with the covariance matrices for M, Linf, and k (in that order) for the sites.  These can be uploaded by loading CovMats.Rdata
+#'
+#' @param Params Params is a list with Params$SiteNames, Params$Mjuv, Params$Madult, Params$k, Params$Linf for all sites.  These can be uploaded by loading Params.Rdata
+#' @param CovMats CovMats is a list with the covariance matrices for Mjuv, Madult, Linf, and k (in that order) for the sites.  These can be uploaded by loading CovMats.Rdata
+#' @param n n is the number of random parameter draws to create uncertainty bounds
 #' @keywords NERR
 #' @export
 #' @examples
 #' run_EPR_NERR_simple(Params,CovMats)
 #'
-run_EPR_NERR_simple <- function(Params,CovMats){
+run_EPR_NERR_simple <- function(Params,CovMats,n=1000){
 
   #LSS December 2019
   #making another function that can deal with the struct of Params for the 7 sites since I restructured EPR_NERR_LS to only take in the parameters for one site at a time
@@ -23,24 +25,29 @@ run_EPR_NERR_simple <- function(Params,CovMats){
   library(egg)
   library(grDevices)
 
+  # Check whether these 'source' commands are necessary - I think not????
   #load('NERRdata.Rdata')
   source("EPR_NERR_simple.R")
   source("kernmatsimple.R")
   source("mkkernsimple.R")
+  # The following should be moved to an input option with default = 200
   Params$veclength <- 200 #moved this to the outside of the function because lower down I have to specify the length of the vectors storing the SSD outputs
-  Params$x <- linspace(0,160,Params$veclength) # space vector, max value is 160 because that's double the biggest Linf
+  Params$x <- seq(from=0,to=160,length.out=Params$veclength) # space vector, max value is 160 because that's double the biggest Linf
 
   #everything will be run through EPR_NERR_LS, but we first need to generate n number of random combinations of variables using the covariance matrices to get an estimate of the uncertainty
-  n = 1000; #try 1000 random combos of parameters - make sure n is even
+  #n = 1000; #try 1000 random combos of parameters - make sure n is even
 
   #EDIT THIS TO CHUCK OUT NEGATIVE VALUES
   RandParams <- vector('list',length(Params$sites))
   for (i in 1:length(Params$sites)){ #need n number of random combos for each site
-    invec <- c(Params$M[i], Params$Linf[i],Params$k[i]) #order of params in the covariance matrices is M, Linf, k, so mimic this in the order of params going into mvrnorm
+    invec <- c(Params$M[i],Params$Linf[i],Params$k[i]) #order of params in the covariance matrices is M, Linf, k, so mimic this in the order of params going into mvrnorm
     out <- mvrnorm(n, invec, CovMats[[i]][[1]], tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
     #out <- mvrnorm(n, invec, matrix(0,3,3), tol = 1e-6, empirical = FALSE, EISPACK = FALSE) #testing, delete later
     RandParams[[i]] <- out
   }
+
+  # Note that at present we have good estimates of juvenile mortality (1st 3 months), but poor estimates of later mortality.
+  # As a first approximately, older mortality rates appear to be ~10% of juvenile mortality rates.
 
   #Now that we have all of the parameters and random parameter combinations, have to multiply M and k by 30 because we have a daily rate and want a monthly
   #Column 1 of RandParams[[i]] is M and column 3 is k
@@ -69,7 +76,8 @@ run_EPR_NERR_simple <- function(Params,CovMats){
 
     for (j in 1:n){ #inner loop goes through the n random parameter combos for each site
 
-      miniParams$M <- RandParams[[i]][j,1]
+      miniParams$Mjuv <- RandParams[[i]][j,1]
+      miniParams$M <- RandParams[[i]][j,1]*0.1 # notice reduction factor here
       miniParams$Linf <- RandParams[[i]][j,2]
       miniParams$k <- RandParams[[i]][j,3]
       miniParams$veclength <- Params$veclength
@@ -114,7 +122,8 @@ run_EPR_NERR_simple <- function(Params,CovMats){
   SSD <- vector('list',length(Params$sites))
   maxSSD_highlow <- vector(length=length(Params$sites))
   for (i in 1:length(Params$sites)){ #outer loop goes through the sites
-    miniParams$M <- Params$M[i]
+    miniParams$Mjuv <- Params$M[i]
+    miniParams$M <- Params$M[i]*0.1 # notice reduction factor here
     miniParams$Linf <- Params$Linf[i]
     miniParams$k <- Params$k[i]
     miniParams$veclength <- Params$veclength
@@ -149,7 +158,6 @@ run_EPR_NERR_simple <- function(Params,CovMats){
 
   } # end loop over sites
 
-  ggarrange(GGp[[1]],GGp[[2]],GGp[[3]],GGp[[4]],GGp[[5]],GGp[[6]],GGp[[7]], ncol = 2)
 
 
   # Separately, plot EPR:
@@ -164,14 +172,18 @@ run_EPR_NERR_simple <- function(Params,CovMats){
   EPR.sub$EPRmin = EPR.sub$EPRmin/Max
   EPR.sub$EPRmax = EPR.sub$EPRmax/Max
 
-  x11()
-  ggplot(data=EPR.sub,aes(x=Site,y=EPR))+
+
+  EPRgg <- ggplot(data=EPR.sub,aes(x=Site,y=EPR))+
     geom_linerange(aes(ymin=EPRmin,ymax=EPRmax))+
     geom_point()+
-    scale_x_discrete(limits=c('Tolomato','Guana','St. Augustine','Salt','Butler','Matanzas','Pellicer'))+
+    scale_x_discrete(limits=c('T','G','St. A','SR','B','M','P'))+
     xlab(NULL)+
     ylab('Relative eggs per oyster recruit')+
     theme_bw()
+
+  # Display all results
+  ggarrange(GGp[[1]],GGp[[2]],GGp[[3]],GGp[[4]],GGp[[5]],GGp[[6]],GGp[[7]],EPRgg, ncol = 2)
+
 
 }
 

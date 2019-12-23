@@ -4,7 +4,7 @@
 \alias{mkkernsimple}
 \title{Internal function to create kernel}
 \usage{
-mkkernsimple(x, y, F, fixparm, T)
+mkkernsimple(x, y, F, M, fixparm, T)
 }
 \arguments{
 \item{x}{This is a matrix x that comes from kernmatsimple}
@@ -12,6 +12,8 @@ mkkernsimple(x, y, F, fixparm, T)
 \item{y}{This is a matrix y that comes from kernmatsimple}
 
 \item{F}{This is the fishing rate, set to 0 in EPR_NERR_simple}
+
+\item{M}{This is the background non-fishing mortality rate}
 
 \item{fixparm}{This is Params that has Params$M, Params$Linf, Params$k (only one value for each) but there are other components added in EPR_NERR_simple before Params goes into this function}
 

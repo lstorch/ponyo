@@ -4,14 +4,16 @@
 \alias{kernmatsimple}
 \title{Internal middle man function to help create kernel}
 \usage{
-kernmatsimple(x, F, fixparm, T)
+kernmatsimple(x, F, M, fixparm, T)
 }
 \arguments{
 \item{x}{This is Params$x from EPR_NERR_simple}
 
 \item{F}{This is the fishing rate, set to 0 in EPR_NERR_simple}
 
-\item{fixparm}{This is Params that has Params$M, Params$Linf, Params$k (only one value for each) but there are other components added in EPR_NERR_simple before Params goes into this function}
+\item{M}{This is the background non-fishing mortality rate}
+
+\item{fixparm}{This is Params that has Params$Linf, Params$k (only one value for each) but there are other components added in EPR_NERR_simple before Params goes into this function}
 
 \item{T}{This is the "step size", set to 1 in EPR_NERR_simple}
 }
